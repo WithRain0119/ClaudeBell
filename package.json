@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Claude Code 桌面/邮件通知工具",
   "main": "src/index.js",
+  "bin": {
+    "claude-bell": "./bin/claude-bell.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
