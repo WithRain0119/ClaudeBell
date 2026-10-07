@@ -55,7 +55,7 @@ const program = new Command();
 
 program
   .name('claude-bell')
-  .description('Claude Code 桌面/邮件通知工具')
+  .description('Claude Code CLI 桌面/邮件通知工具')
   .version(require('../package.json').version);
 
 // ---- hook：处理 Claude Code hook 事件 ----
@@ -87,8 +87,14 @@ program
         process.exit(0);
       }
 
-      // 消息缺省时用默认文案
-      const message = payload.message || DEFAULT_MESSAGES[eventType];
+      // 通知正文：
+      // - need_input：Claude Code 传的是它自己的英文提示（如 "Claude is waiting for your input"），
+      //   对用户没有信息量，统一用中文文案
+      // - task_complete：优先用 payload.message（Claude Code 的 Stop 事件不带该字段，即用默认文案）
+      const message =
+        eventType === 'need_input'
+          ? DEFAULT_MESSAGES.need_input
+          : payload.message || DEFAULT_MESSAGES.task_complete;
       const finished = await waitWithTimeout(notify(eventType, message), HOOK_TIMEOUT_MS);
       if (!finished) {
         logger.warn(`hook 通知超过 ${HOOK_TIMEOUT_MS}ms 未完成，直接退出`);

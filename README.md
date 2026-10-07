@@ -202,10 +202,34 @@ logs/claude-bell-2026-10-07.log
 ## 常见问题
 
 **Q：桌面没有弹出通知？**
-1. 检查 `claude-bell mail status` 之外的桌面开关：`claude-bell config get desktop.enabled` 应为 `true`；
-2. 看日志 `logs/claude-bell-<日期>.log` 是否有 `桌面弹窗已启动`；
-3. 通知出现后 10 秒自动消失，且**新通知会替换旧通知**——如果刚才连发多条，只会看到最后一条；
-4. 自动隐藏的任务栏弹出时，卡片会自动上移避开，属正常行为。
+
+先用"二分法"判断是**程序的问题**还是 **Claude Code 没调用它**：手动模拟一次 hook 调用——
+
+```powershell
+echo '{"hook_event_name":"Stop"}' | claude-bell hook
+```
+
+- **弹窗出现了** → 程序正常，问题在 Claude Code 一侧，逐项检查：
+
+  | 检查项 | 怎么查 |
+  |---|---|
+  | hooks 配置是否写对 | `~/.claude/settings.json` 里有 `Stop` 和 `Notification` 两项，`command` 是 `claude-bell hook` |
+  | 是否重启过 Claude Code | settings.json 在**启动时**读取，改完必须重启才生效 |
+  | 全局命令是否可用 | `claude-bell --version` 能输出版本号（不能则需重新 `npm link`） |
+
+- **还是没弹** → 程序或本机环境问题，继续查：
+
+  | 检查项 | 怎么查 |
+  |---|---|
+  | 桌面通知开关 | `claude-bell config get desktop.enabled` 应为 `true` |
+  | 弹窗进程是否启动 | 日志搜 `桌面弹窗已启动`（有该行说明程序已发出，问题在弹窗渲染） |
+  | 有没有报错 | 日志 `logs/claude-bell-<日期>.log` 搜 `ERROR` |
+  | 是不是被"新通知替换"骗了 | 通知 10 秒自动消失，且**新通知会替换旧通知**，连发多条只会看到最后一条 |
+  | 任务栏遮挡 | 自动隐藏的任务栏弹出时，卡片会自动上移避开，属正常行为 |
+
+**Q：`claude-bell hook` 和 `claude-bell test` 有什么区别？**
+`test` 用来**看通知效果**（弹窗 + 邮件长什么样），不用输入 JSON；`hook` 用来**验对接链路**（JSON 解析 → 事件名映射 → 默认文案 → 容错 → 超时）。
+`hook` 平时不需要手动敲——它由 Claude Code 自动调用，只有调试、排错（见上一个问题）、回归测试时才手动执行。
 
 **Q：通知会出现在截图、录屏或会议共享里吗？**
 不会。为了让毛玻璃背景实时跟随窗口背后的画面，弹窗对截图 API 声明了隐藏（`WDA_EXCLUDEFROMCAPTURE`），因此它**人眼可见，但不会被截图/录屏/共享捕获**。这是实时毛玻璃的必要代价。
