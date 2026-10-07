@@ -11,6 +11,25 @@ const HOOK_EVENT_MAP = {
   Notification: 'need_input',
 };
 
+// hook 消息缺省时的默认文案
+const DEFAULT_MESSAGES = {
+  task_complete: '任务已完成',
+  need_input: 'Claude Code 需要你的确认',
+};
+
+// hook 等待通知完成的上限（毫秒）：防止邮件异常时长时间挂住 Claude Code
+const HOOK_TIMEOUT_MS = 5000;
+
+// 等待 Promise 完成，超时则返回 false（超时计时器不阻止进程退出）
+function waitWithTimeout(promise, ms) {
+  let timer;
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => resolve(false), ms);
+    timer.unref();
+  });
+  return Promise.race([promise.then(() => true), timeout]).finally(() => clearTimeout(timer));
+}
+
 // 从 stdin 读取全部内容（hook 事件由 Claude Code 通过 stdin 传入 JSON）
 function readStdin() {
   return new Promise((resolve) => {
@@ -44,29 +63,41 @@ program
   .command('hook')
   .description('处理 Claude Code hook 事件（从 stdin 读取 JSON）')
   .action(async () => {
-    const raw = (await readStdin()).trim();
-    logger.info(`命令执行: hook，输入=${raw || '(空)'}`);
-
-    if (!raw) {
-      logger.warn('hook 未收到输入，忽略');
-      return;
-    }
-
-    let payload;
+    // 容错要求：任何异常都只记日志，进程始终以退出码 0 结束，绝不导致 Claude Code 报错
     try {
-      payload = JSON.parse(raw);
+      const raw = (await readStdin()).trim();
+      logger.info(`命令执行: hook，输入=${raw || '(空)'}`);
+
+      if (!raw) {
+        logger.warn('hook 未收到输入，忽略');
+        process.exit(0);
+      }
+
+      let payload;
+      try {
+        payload = JSON.parse(raw);
+      } catch (err) {
+        logger.error(`hook 输入不是合法 JSON，忽略：${err.message}`);
+        process.exit(0);
+      }
+
+      const eventType = HOOK_EVENT_MAP[payload.hook_event_name];
+      if (!eventType) {
+        logger.info(`未知 hook 事件，忽略：${payload.hook_event_name}`);
+        process.exit(0);
+      }
+
+      // 消息缺省时用默认文案
+      const message = payload.message || DEFAULT_MESSAGES[eventType];
+      const finished = await waitWithTimeout(notify(eventType, message), HOOK_TIMEOUT_MS);
+      if (!finished) {
+        logger.warn(`hook 通知超过 ${HOOK_TIMEOUT_MS}ms 未完成，直接退出`);
+      }
+      process.exit(0);
     } catch (err) {
-      logger.error(`hook 输入不是合法 JSON，忽略：${err.message}`);
-      return;
+      logger.error(`hook 处理异常，已忽略：${err.message || err}`);
+      process.exit(0);
     }
-
-    const eventType = HOOK_EVENT_MAP[payload.hook_event_name];
-    if (!eventType) {
-      logger.info(`未知 hook 事件，忽略：${payload.hook_event_name}`);
-      return;
-    }
-
-    await notify(eventType, payload.message || '');
   });
 
 // ---- mail：邮件通知开关 ----
