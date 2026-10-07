@@ -1,12 +1,18 @@
-// 配置管理：读写 ~/.claude-bell/config.json，首次运行时从默认配置复制
+// 配置管理：读写用户配置，首次运行时从默认配置复制
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const logger = require('./logger');
 
-// 用户配置目录：~/.claude-bell（用 os.homedir() 拼接，不使用 ~ 字符串）
-const configDir = path.join(os.homedir(), '.claude-bell');
-const configPath = path.join(configDir, 'config.json');
+// 配置文件路径：
+//   默认 ~/.claude-bell/config.json（用 os.homedir() 拼接，不使用 ~ 字符串）
+//   设置了环境变量 CLAUDE_BELL_CONFIG_FILE 时改用它指定的路径
+//   —— 开发期用变量把配置放在项目内，部署后不设置即回到用户目录
+const configPath = process.env.CLAUDE_BELL_CONFIG_FILE
+  ? path.resolve(process.env.CLAUDE_BELL_CONFIG_FILE)
+  : path.join(os.homedir(), '.claude-bell', 'config.json');
+// 配置文件所在目录（不存在时自动创建）
+const configDir = path.dirname(configPath);
 // 项目内置默认配置
 const defaultPath = path.join(__dirname, '..', 'config', 'default.json');
 
