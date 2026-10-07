@@ -1,1 +1,17 @@
-{}
+{
+  "desktop": {
+    "enabled": true
+  },
+  "mail": {
+    "enabled": false,
+    "smtp": {
+      "host": "",
+      "port": 587,
+      "secure": false,
+      "user": "",
+      "pass": ""
+    },
+    "from": "",
+    "to": ""
+  }
+}
