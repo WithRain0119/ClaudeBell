@@ -1,6 +1,6 @@
 # ClaudeBell
 
-Claude Code 桌面/邮件通知工具：任务完成或需要确认时，在桌面右下角弹出通知（可选邮件通知）。
+Claude Code CLI 桌面/邮件通知工具：任务完成或需要确认时，在桌面右下角弹出通知（可选邮件通知）。
 
 **不用一直盯着终端了** —— Claude Code 在后台跑长任务时，你可以去干别的事，任务一结束，桌面右下角会弹出卡片提醒；需要你做选择时也会提醒。开启邮件后还能收到邮件（自己发给自己，手机也能收到推送）。
 
@@ -28,12 +28,11 @@ ClaudeBell/
 ├── src/
 │   ├── config.js           # 配置管理
 │   ├── logger.js           # 日志模块
-│   ├── notifier/
-│   │   ├── index.js        # 通知调度器
-│   │   ├── desktop.js      # 桌面通知（调用 popup.ps1）
-│   │   ├── popup.ps1       # 自绘毛玻璃弹窗（PowerShell + WinForms）
-│   │   └── email.js        # 邮件通知
-│   └── utils.js            # 工具函数
+│   └── notifier/
+│       ├── index.js        # 通知调度器
+│       ├── desktop.js      # 桌面通知（调用 popup.ps1）
+│       ├── popup.ps1       # 自绘毛玻璃弹窗（PowerShell + WinForms）
+│       └── email.js        # 邮件通知
 ├── config/default.json     # 默认配置
 └── logs/                   # 日志目录（不入版本库）
 ```
@@ -41,11 +40,11 @@ ClaudeBell/
 ## 安装
 
 ```bash
-git clone <仓库地址>
+git clone https://github.com/WithRain0119/ClaudeBell
 cd ClaudeBell
 npm install
 
-# 让 claude-bell 命令全局可用
+# 让 claude-bell 命令全局可用（在管理员的权限下的powershell中运行）
 npm link
 ```
 
@@ -62,10 +61,11 @@ claude-bell --help
 
 配置文件位置：
 
-| 场景 | 路径 |
-|---|---|
-| 默认（部署后） | `~/.claude-bell/config.json` |
-| 开发期（可选） | 环境变量 `CLAUDE_BELL_CONFIG_FILE` 指定的路径，例如项目内 `config/dev-config.json` |
+
+| 场景           | 路径                                                                              |
+| -------------- | --------------------------------------------------------------------------------- |
+| 默认（部署后） | `~/.claude-bell/config.json`                                                      |
+| 开发期（可选） | 环境变量`CLAUDE_BELL_CONFIG_FILE` 指定的路径，例如项目内 `config/dev-config.json` |
 
 文件不存在时会自动从 `config/default.json` 生成一份默认配置：
 
@@ -82,6 +82,7 @@ claude-bell --help
 ```
 
 > **开发期**想让配置留在项目里（不写用户目录）：
+>
 > - PowerShell：`$env:CLAUDE_BELL_CONFIG_FILE = "E:\claude code\Project\ClaudeBell\config\dev-config.json"`
 > - bash：`export CLAUDE_BELL_CONFIG_FILE="/e/claude code/Project/ClaudeBell/config/dev-config.json"`
 >
@@ -96,10 +97,10 @@ claude-bell --help
 claude-bell config set mail.smtp.host smtp.qq.com
 claude-bell config set mail.smtp.port 465
 claude-bell config set mail.smtp.secure true
-claude-bell config set mail.smtp.user 2094348228@qq.com
+claude-bell config set mail.smtp.user 你的qq邮箱
 claude-bell config set mail.smtp.pass 你的16位授权码
-claude-bell config set mail.from 2094348228@qq.com
-claude-bell config set mail.to 2094348228@qq.com   # 填自己 = 自己给自己发
+claude-bell config set mail.from 你的qq邮箱
+claude-bell config set mail.to 你的qq邮箱   # 填自己 = 自己给自己发
 ```
 
 3. 开启邮件通知并测试：
@@ -111,12 +112,13 @@ claude-bell test
 
 其他邮箱的服务器参数：
 
-| 邮箱 | host | port | secure |
-|---|---|---|---|
-| QQ 邮箱 | `smtp.qq.com` | `465` | `true` |
-| 163 邮箱 | `smtp.163.com` | `465` | `true` |
-| Gmail | `smtp.gmail.com` | `465` | `true` |
-| Outlook | `smtp.office365.com` | `587` | `false` |
+
+| 邮箱     | host                 | port  | secure  |
+| -------- | -------------------- | ----- | ------- |
+| QQ 邮箱  | `smtp.qq.com`        | `465` | `true`  |
+| 163 邮箱 | `smtp.163.com`       | `465` | `true`  |
+| Gmail    | `smtp.gmail.com`     | `465` | `true`  |
+| Outlook  | `smtp.office365.com` | `587` | `false` |
 
 ### 开关邮件通知
 
@@ -128,15 +130,16 @@ claude-bell mail status  # 查看状态
 
 ## CLI 命令
 
-| 命令 | 说明 |
-|---|---|
-| `claude-bell hook` | 处理 Claude Code hook 事件（从 stdin 读取 JSON，由 Claude Code 自动调用） |
-| `claude-bell mail on` | 开启邮件通知 |
-| `claude-bell mail off` | 关闭邮件通知 |
-| `claude-bell mail status` | 查看邮件通知开关状态 |
-| `claude-bell config set <key> <value>` | 设置配置项（value 优先按 JSON 解析，如 `true`/`587`，解析失败按字符串保存） |
-| `claude-bell config get <key>` | 读取配置项（`mail.smtp.pass` 脱敏显示为 `***`） |
-| `claude-bell test [eventType]` | 发送测试通知，`eventType` 可选 `task_complete`（默认）/ `need_input` |
+
+| 命令                                   | 说明                                                                       |
+| -------------------------------------- | -------------------------------------------------------------------------- |
+| `claude-bell hook`                     | 处理 Claude Code hook 事件（从 stdin 读取 JSON，由 Claude Code 自动调用）  |
+| `claude-bell mail on`                  | 开启邮件通知                                                               |
+| `claude-bell mail off`                 | 关闭邮件通知                                                               |
+| `claude-bell mail status`              | 查看邮件通知开关状态                                                       |
+| `claude-bell config set <key> <value>` | 设置配置项（value 优先按 JSON 解析，如`true`/`587`，解析失败按字符串保存） |
+| `claude-bell config get <key>`         | 读取配置项（`mail.smtp.pass` 脱敏显示为 `***`）                            |
+| `claude-bell test [eventType]`         | 发送测试通知，`eventType` 可选 `task_complete`（默认）/ `need_input`       |
 
 ## 集成到 Claude Code
 
@@ -211,21 +214,22 @@ echo '{"hook_event_name":"Stop"}' | claude-bell hook
 
 - **弹窗出现了** → 程序正常，问题在 Claude Code 一侧，逐项检查：
 
-  | 检查项 | 怎么查 |
-  |---|---|
-  | hooks 配置是否写对 | `~/.claude/settings.json` 里有 `Stop` 和 `Notification` 两项，`command` 是 `claude-bell hook` |
-  | 是否重启过 Claude Code | settings.json 在**启动时**读取，改完必须重启才生效 |
-  | 全局命令是否可用 | `claude-bell --version` 能输出版本号（不能则需重新 `npm link`） |
 
+  | 检查项                 | 怎么查                                                                                        |
+  | ---------------------- | --------------------------------------------------------------------------------------------- |
+  | hooks 配置是否写对     | `~/.claude/settings.json` 里有 `Stop` 和 `Notification` 两项，`command` 是 `claude-bell hook` |
+  | 是否重启过 Claude Code | settings.json 在**启动时**读取，改完必须重启才生效                                            |
+  | 全局命令是否可用       | `claude-bell --version` 能输出版本号（不能则需重新 `npm link`）                               |
 - **还是没弹** → 程序或本机环境问题，继续查：
 
-  | 检查项 | 怎么查 |
-  |---|---|
-  | 桌面通知开关 | `claude-bell config get desktop.enabled` 应为 `true` |
-  | 弹窗进程是否启动 | 日志搜 `桌面弹窗已启动`（有该行说明程序已发出，问题在弹窗渲染） |
-  | 有没有报错 | 日志 `logs/claude-bell-<日期>.log` 搜 `ERROR` |
+
+  | 检查项                   | 怎么查                                                                 |
+  | ------------------------ | ---------------------------------------------------------------------- |
+  | 桌面通知开关             | `claude-bell config get desktop.enabled` 应为 `true`                   |
+  | 弹窗进程是否启动         | 日志搜`桌面弹窗已启动`（有该行说明程序已发出，问题在弹窗渲染）         |
+  | 有没有报错               | 日志`logs/claude-bell-<日期>.log` 搜 `ERROR`                           |
   | 是不是被"新通知替换"骗了 | 通知 10 秒自动消失，且**新通知会替换旧通知**，连发多条只会看到最后一条 |
-  | 任务栏遮挡 | 自动隐藏的任务栏弹出时，卡片会自动上移避开，属正常行为 |
+  | 任务栏遮挡               | 自动隐藏的任务栏弹出时，卡片会自动上移避开，属正常行为                 |
 
 **Q：`claude-bell hook` 和 `claude-bell test` 有什么区别？**
 `test` 用来**看通知效果**（弹窗 + 邮件长什么样），不用输入 JSON；`hook` 用来**验对接链路**（JSON 解析 → 事件名映射 → 默认文案 → 容错 → 超时）。
@@ -236,12 +240,13 @@ echo '{"hook_event_name":"Stop"}' | claude-bell hook
 
 **Q：邮件发不出去？**
 
-| 报错 | 原因 |
-|---|---|
-| `Invalid login: 535` | 用了邮箱登录密码，应改用 **SMTP 授权码** |
-| `connect ETIMEDOUT` / `ECONNREFUSED` | 端口/加密方式选错（QQ/163 用 `465` + `secure=true`），或网络屏蔽了 SMTP |
-| `Mail from must equal authorized user` | `mail.from` 必须与 `mail.smtp.user` 一致 |
-| 日志显示发送成功但收不到 | 查垃圾邮件箱；换一个收件邮箱再试 |
+
+| 报错                                   | 原因                                                                   |
+| -------------------------------------- | ---------------------------------------------------------------------- |
+| `Invalid login: 535`                   | 用了邮箱登录密码，应改用**SMTP 授权码**                                |
+| `connect ETIMEDOUT` / `ECONNREFUSED`   | 端口/加密方式选错（QQ/163 用`465` + `secure=true`），或网络屏蔽了 SMTP |
+| `Mail from must equal authorized user` | `mail.from` 必须与 `mail.smtp.user` 一致                               |
+| 日志显示发送成功但收不到               | 查垃圾邮件箱；换一个收件邮箱再试                                       |
 
 **Q：PowerShell 里手工测试时中文变成 `?????`？**
 PowerShell 向原生命令管道传参默认不是 UTF-8，先执行 `$OutputEncoding = [System.Text.Encoding]::UTF8`。（Claude Code 调用 hook 时不受影响。）
