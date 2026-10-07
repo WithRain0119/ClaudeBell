@@ -87,6 +87,14 @@ program
         process.exit(0);
       }
 
+      // Claude Code 的 Notification 有多种 notification_type，其中 idle_prompt 只是
+      // "输入框闲置约 60 秒"的提醒，并非需要用户确认的操作；若一并弹「需要你确认」，
+      // 会在每次闲置时误报（实测一天 10 次），因此只记日志不通知
+      if (payload.notification_type === 'idle_prompt') {
+        logger.info('Notification 为 idle_prompt（输入框闲置提醒），不发送通知');
+        process.exit(0);
+      }
+
       // 通知正文：
       // - need_input：Claude Code 传的是它自己的英文提示（如 "Claude is waiting for your input"），
       //   对用户没有信息量，统一用中文文案

@@ -293,8 +293,30 @@ public class BellPopupForm : Form
     Write-BellLog '窗口无法对截图隐身，保持静态毛玻璃背景（避免抓到卡片自身）'
   }
 
+  # ---- 提示音：弹窗出现时播放 audio 目录下的音效 ----
+  # 用 WPF 的 MediaPlayer（支持 mp3；System.Media.SoundPlayer 只支持 wav）
+  # 与弹窗同进程播放，声音和窗口同时出现；无声卡/文件缺失等失败只记日志，不影响弹窗
+  $player = $null
+  try {
+    Add-Type -AssemblyName PresentationCore
+    $audioDir = Join-Path $PSScriptRoot '..\..\audio'
+    $sfx = Get-ChildItem -Path $audioDir -Filter '*.mp3' -File -ErrorAction Stop | Select-Object -First 1
+    if ($sfx) {
+      $player = New-Object System.Windows.Media.MediaPlayer
+      $player.Volume = 1.0 # 默认 0.5 偏轻，提示音取满音量
+      $player.Open([uri]$sfx.FullName)
+      $player.Play()
+      Write-BellLog ("提示音播放中: {0}" -f $sfx.Name)
+    } else {
+      Write-BellLog ("audio 目录下没有 mp3 文件，跳过提示音: {0}" -f $audioDir)
+    }
+  } catch {
+    Write-BellLog ("提示音播放失败(忽略): {0}" -f $_.Exception.Message)
+  }
+
   Write-BellLog ("进入 ShowDialog（窗口应可见）: 位置=[{0},{1}] 尺寸=[{2},{3}] 缩放={4}" -f $form.Left, $form.Top, $form.Width, $form.Height, $s)
   $null = $form.ShowDialog()
+  if ($player) { $player.Close() } # 释放音频设备，避免进程残留
   Write-BellLog 'ShowDialog 结束（窗口已关闭）'
   exit 0
 }

@@ -168,6 +168,7 @@ claude-bell mail status  # 查看状态
 
 - `Stop`：一次回复结束时触发 → 「Claude Code 任务完成」
 - `Notification`：需要你确认或选择时触发 → 「Claude Code 需要你确认」
+  （`notification_type` 为 `idle_prompt` 的"输入框闲置"提醒会被忽略，不弹窗）
 
 ### 2. 未执行 `npm link` 时（开发期）
 
