@@ -6,6 +6,11 @@
   "bin": {
     "claude-bell": "./bin/claude-bell.js"
   },
+  "files": [
+    "bin",
+    "src",
+    "config/default.json"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,8 +18,14 @@
     "type": "git",
     "url": "git+https://github.com/WithRain0119/ClaudeBell.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "claude-code",
+    "notification",
+    "desktop-notification",
+    "email",
+    "cli"
+  ],
+  "author": "Changenming",
   "license": "MIT",
   "type": "commonjs",
   "bugs": {
@@ -23,7 +34,6 @@
   "homepage": "https://github.com/WithRain0119/ClaudeBell#readme",
   "dependencies": {
     "commander": "^15.0.0",
-    "node-notifier": "^10.0.1",
     "nodemailer": "^10.0.15"
   }
 }

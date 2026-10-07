@@ -164,9 +164,11 @@ program
     await notify(eventType, '这是一条 ClaudeBell 测试通知');
   });
 
-// 不带参数时显示帮助
+// 不带参数时只显示一次帮助并正常退出
+// （若直接交给 parse，commander 会自己再打印一次帮助并以退出码 1 结束）
 if (!process.argv.slice(2).length) {
   program.outputHelp();
+  process.exit(0);
 }
 
 program.parse(process.argv);
